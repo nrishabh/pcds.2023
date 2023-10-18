@@ -23,18 +23,18 @@ public class BlockingQueue {
 
         // wait and don't add if the queue is full
         while (qlen == limit) {
-            wait(); 
-          }
+            wait();
+        }
 
         // get slot and update head and length
-        slot = head;
-        head = (head + 1) % limit; 
+        slot = (head + qlen) % limit;
         qlen++;
+        // head was not updated here because put() is for adding items to the queue
 
         // notify takers if this is the first item in queue
         if (qlen == 1) {
             notifyAll();
-          }
+        }
 
         // add the item
         this.queue[slot] = item;
@@ -44,27 +44,27 @@ public class BlockingQueue {
     throws InterruptedException {
 
         // slot to be taken and deleted
-        int tail;
+        int slot;
 
         // don't take from an empty queue
         while (qlen == 0) {
             wait();
-          }
+        }
 
         //get slot 
-        tail = (head + limit - qlen) % limit;
-
-        // if taking from a full queue, notify putters
-        if (qlen == limit) {
-            notifyAll();
-          } 
-        
-        // update queue length
+        slot = head;
+        head = (head + 1) % limit; 
+        // head is updated here because take() is for removing items from the queue
         qlen--;
 
+        // if taking from a full queue, notify putters
+        if (qlen == limit - 1) {
+            notifyAll();
+        }
+
         // take the item and dereference pointer for garbage collection
-        String ret_obj = this.queue[tail];
-        queue[tail]=null;
+        String ret_obj = this.queue[slot];
+        queue[slot]=null;
 
         // return item
         return ret_obj;
